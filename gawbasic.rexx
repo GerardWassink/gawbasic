@@ -4,12 +4,13 @@
 /* Program name:    gawbasic.rexx                                             */
 /* Author:          Gerard Wassink                                            */
 /* Date:            September 2019                                            */
-	versionString = "1.0"
+	versionString = "1.1"
 /* Purpose:         Practise writing interpreters. learning to understand the */
 /*                  inner workings of a computer language                     */
 /*                                                                            */
 /* History:                                                                   */
 /*   v1.0     First setup skeleton for entering and listing the program       */
+/*   v1.1     Built in the RENUM command                                      */
 /*                                                                            */
 /* -------------------------------------------------------------------------- */
 
@@ -78,6 +79,8 @@ Processing:
 			
 			When cmd == "LIST"	Then 	Call listProgram(input)
 
+			When cmd == "RENUM"	Then 	Call renumProgram(input)
+
 			When cmd == "DEL"	Then 	Call deleteLines(input)
 
 			When cmd == "EXIT"	Then Do
@@ -112,6 +115,35 @@ listProgram: Procedure Expose program.
 		lineNum = Word(program.i,1)
 		If (lineNum >= fromLine) & (lineNum <= toLine) Then Do
 			Say program.i
+		End
+	End
+Return
+
+
+/* -------------------------------------------------------------------------- */
+/* --- renumProgram routine ------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+renumProgram: Procedure Expose program.
+	Parse Arg input
+	Call sortProgram
+	incr = 10
+	If Words(input) > 1 Then Do
+		Parse Var input . incr rest
+		If rest == "" Then Do
+			If DataType(incr,"W") Then Do 
+				Say "renumbering program with increments of" incr
+				newLine = incr
+				Do i = 1 to program.0
+					lineNum = Right(newLine,6,"0")
+					Parse Var program.i . restOfLine
+					program.i = lineNum restOfLine
+					newLine = newLine + incr
+				End
+			End; Else Do
+				Say "increment value not numeric"
+			End
+		End; Else Do
+			Say "Usage: renum [increment]"
 		End
 	End
 Return
