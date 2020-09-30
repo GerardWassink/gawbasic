@@ -7,30 +7,30 @@ As an exercise in coding an interpreter for another language, I chose to make an
 
 ### implemented
 
-NN
-	Any number with BASIC text behind it will eneter that text as an extra line in the program memory
+#### NN program text
+Any number with BASIC text behind it will eneter that text as an extra line in the program memory
 
 #### LIST
 Show an onscreen listing of the program lines you entered
 
 #### RENUM [number]
-	renumbers the lines in program memory, starting at 'number' and using 'number as increment
+renumbers the lines in program memory, starting at 'number' and using 'number as increment
 
 #### DEL [fromLine [toLine] ]
-	delete all lines from and including 'fromLine' up to and including 'toLine'
+delete all lines from and including 'fromLine' up to and including 'toLine'
 
 #### EXIT
-	Leave the program
+Leave the program
 
 ### To come
 
 #### SAVE programName
-	Save the program as programName
+Save the program as programName
 
 #### LOAD programName
-	load a program from a file called programName
+load a program from a file called programName
 
 #### NEW
-	Erase the programlines from memory
+Erase the programlines from memory
 
 
