@@ -25,44 +25,6 @@ Exit
 
 
 /* -------------------------------------------------------------------------- */
-/* ----- Initialisation routine --------------------------------------------- */
-/* -------------------------------------------------------------------------- */
-Initialize:
-	rc = 1
-	Say Left("--- gawbasic --- version" versionString "---" Date() "---", 72, "-")
-	
-	/* ----------------------------------------- array for program lines --- */
-	program. = ""
-	program.0 = 0
-	
-	/* -------------------------------------- array for program keywords --- */
-	keywords. = ""
-	keywords.0 = 0
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "CLR"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "DATA"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "DIM"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "END"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "FOR"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "GET"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "GOTO"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "GOSUB"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "IF"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "INPUT"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "LET"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "NEW"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "NEXT"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "ON"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "PRINT"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "READ"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "REM"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "RESTORE"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "RETURN"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "STOP"
-	
-Return rc
-
-
-/* -------------------------------------------------------------------------- */
 /* ----- Processing routine, ------------------------------------------------ */
 /* -------------------------------------------------------------------------- */
 Processing:
@@ -82,6 +44,8 @@ Processing:
 			When cmd == "RENUM"	Then 	Call renumProgram(input)
 
 			When cmd == "DEL"	Then 	Call deleteLines(input)
+
+			When cmd == "IX"	Then 	Call indexMe
 
 			When cmd == "EXIT"	Then Do
 				cmd = ""
@@ -222,9 +186,98 @@ Return
 
 
 /* -------------------------------------------------------------------------- */
+/* ----- Check Input file name ----------------------- CheckInputFileName --- */
+/* -------------------------------------------------------------------------- */
+CheckInputFileName:
+	Procedure Expose errorMsg
+	Parse arg filename
+	If Stream(filename, 'C', 'OPEN READ') == "READY:" Then Do
+		errorMsg = "file" filename "exists, ready to read"
+	End; Else Do
+		errorMsg = "file can not be found:" filename
+		filename = ""
+	End
+Return filename
+
+
+/* -------------------------------------------------------------------------- */
+/* ----- Initialisation routine --------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+Initialize:
+	rc = 1
+	Say Left("--- gawbasic --- version" versionString "---" Date() "---", 72, "-")
+	
+	/* ----------------------------------------- array for program lines --- */
+	program. = ""
+	program.0 = 0
+	
+	/* -------------------------------------- array for program keywords --- */
+	keywords. = ""
+	keywords.0 = 0
+	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "CLR"
+	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "DATA"
+	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "DIM"
+	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "END"
+	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "FOR"
+	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "GET"
+	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "GOTO"
+	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "GOSUB"
+	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "IF"
+	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "INPUT"
+	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "LET"
+	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "NEW"
+	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "NEXT"
+	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "ON"
+	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "PRINT"
+	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "READ"
+	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "REM"
+	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "RESTORE"
+	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "RETURN"
+	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "STOP"
+	
+Return rc
+
+
+/* -------------------------------------------------------------------------- */
 /* ----- End Program routine ------------------------------------------------ */
 /* -------------------------------------------------------------------------- */
 ProgramEnd:
 	Say "Program gawbasic ends"
 	Say Left("--- gawbasic --- version" versionString "---" Date() "---", 72, "-")
+Return
+
+
+/* -------------------------------------------------------------------------- */
+/* ----- Index of labels in this Rexx file ---------------------- indexMe --- */
+/* -------------------------------------------------------------------------- */
+indexMe:
+	Procedure
+	lnum = 0
+	longest = 0
+	srcFile = "./gawbasic.rexx"			/* Read our own source -------------- */
+	If Stream(srcFile, 'C', 'OPEN READ') = "READY:" Then Do
+		i = 1
+		Do While Lines(srcFile)
+			line = Strip(Linein(srcFile))
+			lnum = lnum + 1
+			If (line <> "") Then Do
+				w = Word(line,1)
+				If (Right(w, 1) == ":") Then Do	/* Do we have a label? ------ */
+					If Length(w) > longest Then longest = Length(w)
+					index.i.1 = Right("      "||lnum, 6)
+					index.i.2 = w
+					index.0 = i
+					i = i + 1
+				End
+			End
+		End
+		status = Stream(srcFile, 'C', 'CLOSE')
+		Do i = 1 to index.0
+			If (Length(index.i.2)/2) <> Trunc(Length(index.i.2)/2) Then index.i.2 = index.i.2||" "
+			Say index.i.2 Copies(" .", Trunc((longest - Length(index.i.2)) / 2 )) index.i.1 
+		End
+	End; Else Do
+		srcMsg = "Error opening file" srcFile
+		Exit 8
+	End
 Return
