@@ -45,6 +45,10 @@ Processing:
 
 			When cmd == "DEL"	Then 	Call deleteLines(input)
 
+			When cmd == "SAVE"	Then 	Call saveProgram(input)
+
+			When cmd == "LOAD"	Then 	Call loadProgram(input)
+
 			When cmd == "IX"	Then 	Call indexMe
 
 			When cmd == "EXIT"	Then Do
@@ -186,6 +190,67 @@ Return
 
 
 /* -------------------------------------------------------------------------- */
+/* ----- Save Program to disk -------------------------------- saveProgram--- */
+/* -------------------------------------------------------------------------- */
+saveProgram:
+	Procedure Expose program.
+	Parse Arg input
+	Parse Var input cmd fileName .
+	
+	If fileName <> "" Then  Do
+		fileName = fileName || ".bas"
+		testValue = CheckOutputFileName(fileName)
+		If testValue <> "" Then Do
+			If Stream(fileName, 'C', 'OPEN WRITE REPLACE') = "READY:" Then Do
+				Do i = 1 to program.0
+					lc = Lineout(fileName, program.i)
+				End
+				Say "Saved program to" fileName 
+			End; Else Do
+				Say "Error writing to file" fileName
+				Exit 8
+			End
+		End; Else Do
+			Say "Not a valid filename" fileName
+		End
+	End; Else Do
+		Say "No filename specified for SAVE command"
+	End
+Return
+
+
+/* -------------------------------------------------------------------------- */
+/* ----- Load Program from disk ------------------------------ loadProgram--- */
+/* -------------------------------------------------------------------------- */
+loadProgram:
+	Procedure Expose program.
+	Parse Arg input
+	Parse Var input cmd fileName .
+	
+	If fileName <> "" Then  Do
+		fileName = fileName || ".bas"
+		testValue = CheckInputFileName(fileName)
+		If testValue <> "" Then Do
+			program.0 = 0
+			program. = ""
+			i = 0
+			Do While Lines(fileName)
+				line = Linein(FileName)
+				i = i + 1
+				program.i = line
+			End
+			program.0 = i
+			Say "program" fileName "loaded"
+		End; Else Do
+			Say "Not a valid filename" fileName
+		End
+	End; Else Do
+		Say "No filename specified for LOAD command"
+	End
+Return
+
+
+/* -------------------------------------------------------------------------- */
 /* ----- Check Input file name ----------------------- CheckInputFileName --- */
 /* -------------------------------------------------------------------------- */
 CheckInputFileName:
@@ -197,6 +262,22 @@ CheckInputFileName:
 		errorMsg = "file can not be found:" filename
 		filename = ""
 	End
+Return filename
+
+
+/* -------------------------------------------------------------------------- */
+/* ----- Check Output file name --------------------- CheckOutputFileName --- */
+/* -------------------------------------------------------------------------- */
+CheckOutputFileName:
+	Procedure Expose errorMsg
+	Parse arg filename
+	If Stream(filename, 'C', 'OPEN WRITE') == "READY:" Then Do
+		errorMsg = "file" filename "ready to write"
+	End; Else Do
+		errorMsg = "file not available for writing:" filename
+		filename = ""
+	End
+	retCod = Stream(filename, 'C', 'CLOSE')
 Return filename
 
 
