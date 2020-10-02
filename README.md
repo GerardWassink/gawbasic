@@ -19,18 +19,18 @@ renumbers the lines in program memory, starting at 'number' and using 'number as
 #### DEL [fromLine [toLine] ]
 delete all lines from and including 'fromLine' up to and including 'toLine'
 
+#### NEW
+Erase the programlines from memory
+
+#### SAVE fileName
+saves all lines from program memory to a file named fileName.bas
+
+#### LOAD fileName
+loads a file named fileName.bas into program memory
+
 #### EXIT
 Leave the program
 
 ### To come
-
-#### SAVE programName
-Save the program as programName
-
-#### LOAD programName
-load a program from a file called programName
-
-#### NEW
-Erase the programlines from memory
 
 

@@ -4,13 +4,14 @@
 /* Program name:    gawbasic.rexx                                             */
 /* Author:          Gerard Wassink                                            */
 /* Date:            September 2019                                            */
-	versionString = "1.1"
+	versionString = "1.2"
 /* Purpose:         Practise writing interpreters. learning to understand the */
 /*                  inner workings of a computer language                     */
 /*                                                                            */
 /* History:                                                                   */
 /*   v1.0     First setup skeleton for entering and listing the program       */
 /*   v1.1     Built in the RENUM command                                      */
+/*   v1.2     Built in the DEL, NEW, SAVE, LOAD commands                      */
 /*                                                                            */
 /* -------------------------------------------------------------------------- */
 
@@ -42,8 +43,10 @@ Processing:
 			When cmd == "LIST"	Then 	Call listProgram(input)
 
 			When cmd == "RENUM"	Then 	Call renumProgram(input)
-
+			
 			When cmd == "DEL"	Then 	Call deleteLines(input)
+
+			When cmd == "NEW"	Then 	Call newProgram
 
 			When cmd == "SAVE"	Then 	Call saveProgram(input)
 
@@ -69,21 +72,25 @@ Return
 /* -------------------------------------------------------------------------- */
 listProgram: Procedure Expose program.
 	Parse Arg input
-	Call sortProgram
-	If Words(input) > 1 Then Do
-		Parse Var input . fromLine toLine .
-		If toLine == "" Then toLine = fromLine
-	End; Else Do
-		fromLine = 0
-		toLine = 999999
-	End
-	fromLine = Right(fromLine,6,"0")
-	toLine   = Right(toLine,6,"0")
-	Do i = 1 to program.0
-		lineNum = Word(program.i,1)
-		If (lineNum >= fromLine) & (lineNum <= toLine) Then Do
-			Say program.i
+	If program.0 > 0 Then Do
+		Call sortProgram
+		If Words(input) > 1 Then Do
+			Parse Var input . fromLine toLine .
+			If toLine == "" Then toLine = fromLine
+		End; Else Do
+			fromLine = 0
+			toLine = 999999
 		End
+		fromLine = Right(fromLine,6,"0")
+		toLine   = Right(toLine,6,"0")
+		Do i = 1 to program.0
+			lineNum = Word(program.i,1)
+			If (lineNum >= fromLine) & (lineNum <= toLine) Then Do
+				Say program.i
+			End
+		End
+	End; Else Do
+		Say "No program in memory"
 	End
 Return
 
@@ -142,6 +149,16 @@ deleteLines: Procedure Expose program.
 			program.0 = program.0 - 1
 		End
 	End
+Return
+
+
+/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------- newProgram routine --- */
+/* -------------------------------------------------------------------------- */
+newProgram:
+	drop program.
+	program. = ""
+	program.0 = 0
 Return
 
 
