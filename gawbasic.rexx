@@ -9,9 +9,9 @@
 /*                  inner workings of a computer language                     */
 /*                                                                            */
 /* History:                                                                   */
-/*   v1.0     First setup skeleton for entering and listing the program       */
-/*   v1.1     Built in the RENUM command                                      */
-/*   v1.2     Built in the DEL, NEW, SAVE, LOAD commands                      */
+/*   v0.0     First setup skeleton for entering and listing the program       */
+/*            Built in the RENUM command                                      */
+/*   v0.1     Built in the DEL, NEW, SAVE, LOAD commands                      */
 /*                                                                            */
 /* -------------------------------------------------------------------------- */
 
