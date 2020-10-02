@@ -12,6 +12,8 @@
 /*   v0.1     First setup skeleton for entering and listing the program       */
 /*            Built in the RENUM, LIST command                                */
 /*            Built in the DEL, NEW, SAVE, LOAD commands                      */
+/*   v0.2     Entered function table                                          */
+/*            Coded RUN and CONT statements                                   */
 /*                                                                            */
 /* -------------------------------------------------------------------------- */
 
@@ -52,6 +54,10 @@ Processing:
 
 			When cmd == "LOAD"	Then 	Call loadProgram(input)
 
+			When cmd == "RUN"	Then 	Call runProgram(input)
+
+			When cmd == "CONT"	Then 	Call contProgram(input)
+
 			When cmd == "IX"	Then 	Call indexMe
 
 			When cmd == "EXIT"	Then Do
@@ -65,6 +71,118 @@ Processing:
 		End
 	End
 Return
+
+
+/* -------------------------------------------------------------------------- */
+/* --- runProgram routine --------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+runProgram:
+	If program.0 > 0 Then Do
+		Call sortProgram
+		curLine = 0
+		Call execProgram
+	End; Else Do
+		Say "No program in memory"
+	End
+Return
+
+
+/* -------------------------------------------------------------------------- */
+/* --- contProgram routine -------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+contProgram:
+	If program.0 > 0 Then Do
+		Call sortProgram
+		If curLine <= program.0 Then Do
+			Call execProgram
+		End; Else Do
+			Say "Can't continue, end of program reached"
+		End
+	End; Else Do
+		Say "No program in memory"
+	End
+Return
+
+
+/* -------------------------------------------------------------------------- */
+/* --- execProgram routine -------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+execProgram:
+	Do Until ( (curLine >= program.0) | (stmt == "STOP") | (stmt == "END") )
+		curLine = curLine + 1
+		execLine = program.curLine
+		Parse Var execLine lineNum stmt rest
+		stmt = Upper(stmt)
+		Call execStatement(execLine)
+	End
+Return
+
+
+/* -------------------------------------------------------------------------- */
+/* --- execStatement routine ------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+execStatement:
+	Parse Var execLine lnum verb rest
+	verb = Upper(verb)
+	Select
+		When verb = "CLR" Then Do
+			Say "CLR statement"
+		End
+		When verb = "END" Then Do
+			Say "END statement"
+		End
+		When verb = "REM" Then Do
+			                               /* --- Do nothing for comments --- */
+			Say "REM statement"
+		End
+		When verb = "PRINT" Then Do
+			Say "PRINT statement"
+		End
+		When verb = "GOTO" Then Do
+			Say "GOTO statement"
+			nNum = Word(rest,1)
+			curline = findLnum(nNum)
+		End
+		Otherwise Do
+			Say "Execution halted, syntax error in line" lnum "- Incorrect statement" verb
+			curLine = program.0 + 1
+		End
+	End
+Return rc
+
+
+/* -------------------------------------------------------------------------- */
+/* --- findLnum routine ----------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+findLnum:
+	Parse Arg l .
+	l = Right(l, 6, "0")
+	rc = program.0 + 1
+	Do progPtr = 1 to program.0
+		If l == Word(program.progPtr, 1) Then Do
+			rc = progPtr
+			Leave
+		End
+	End
+	If rc == (program.0 + 1) Then Do
+		Say "GOTO line" l "not found, program halts in line" curLine
+	End
+Return rc
+
+
+/* -------------------------------------------------------------------------- */
+/* --- findStatement routine ------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+findStatement:
+	Parse Arg s .
+	rc = ""
+	Do sNum = 1 to statement.0
+		If s == Word(statement.sNum, 1) Then Do
+			rc = s
+			Leave
+		End
+	End
+Return rc
 
 
 /* -------------------------------------------------------------------------- */
@@ -305,34 +423,72 @@ Initialize:
 	rc = 1
 	Say Left("--- gawbasic --- version" versionString "---" Date() "---", 72, "-")
 	
-	/* ----------------------------------------- array for program lines --- */
+	/* ------------------------------------------ array for program lines --- */
 	program. = ""
 	program.0 = 0
 	
-	/* -------------------------------------- array for program keywords --- */
-	keywords. = ""
-	keywords.0 = 0
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "CLR"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "DATA"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "DIM"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "END"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "FOR"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "GET"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "GOTO"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "GOSUB"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "IF"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "INPUT"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "LET"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "NEW"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "NEXT"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "ON"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "PRINT"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "READ"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "REM"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "RESTORE"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "RETURN"
-	ix = keywords.0 + 1; keywords.0 = ix; keywords.ix = "STOP"
+	/* ------------------------------------- array for program statements --- */
+	/* --- Syntax description:                                            --- */
+	/* ---    C      Constant argument can be N or A                      --- */
+	/* ---    CS     Constant string argument                             --- */
+	/* ---    FN     file name                                            --- */
+	/* ---    LN     Line Number argument                                 --- */
+	/* ---    N      Numerical argument                                   --- */
+	/* ---    S      String argument                                      --- */
+	/* ---    V      Undetermined variable name                           --- */
+	/* ---    VN     Numeric variable name                                --- */
+	/* ---    VS     String variable name                                 --- */
+	/* ---    X      Expression                                           --- */
+	/* ---    [ ]    Optional argument enclosed                           --- */
+	/* ---    |      OR sign - i.e.  N|A : Numeric OR String              --- */
+	/* ---    ...    elipses - last item can be repeated                  --- */
 	
+	statement. = ""
+	statement.0 = 0
+	ix = statement.0 + 1; statement.0 = ix; statement.ix = "CLR"
+	ix = statement.0 + 1; statement.0 = ix; statement.ix = "DATA C [, C] ..."
+	ix = statement.0 + 1; statement.0 = ix; statement.ix = "DIM V(N [, N] ...)"
+	ix = statement.0 + 1; statement.0 = ix; statement.ix = "END"
+	ix = statement.0 + 1; statement.0 = ix; statement.ix = "FOR VN = N TO N [STEP N]"
+	ix = statement.0 + 1; statement.0 = ix; statement.ix = "GET V [, V] ..."
+	ix = statement.0 + 1; statement.0 = ix; statement.ix = "GOSUB NL"
+	ix = statement.0 + 1; statement.0 = ix; statement.ix = "GOTO NL"
+	ix = statement.0 + 1; statement.0 = ix; statement.ix = "IF X [THEN | GOTO] LN"
+	ix = statement.0 + 1; statement.0 = ix; statement.ix = "INPUT [CS] V [, V] ..."
+	ix = statement.0 + 1; statement.0 = ix; statement.ix = "[LET] V = X"
+	ix = statement.0 + 1; statement.0 = ix; statement.ix = "LOAD FN"
+	ix = statement.0 + 1; statement.0 = ix; statement.ix = "NEW"
+	ix = statement.0 + 1; statement.0 = ix; statement.ix = "NEXT [N] [, N] ..."
+	ix = statement.0 + 1; statement.0 = ix; statement.ix = "ON X [GOTO | GOSUB] LN [, LN] ..."
+	ix = statement.0 + 1; statement.0 = ix; statement.ix = "PRINT [X [[,|;] X] ...]"
+	ix = statement.0 + 1; statement.0 = ix; statement.ix = "READ V [, V] ..."
+	ix = statement.0 + 1; statement.0 = ix; statement.ix = "REM arbitrary text"
+	ix = statement.0 + 1; statement.0 = ix; statement.ix = "RESTORE"
+	ix = statement.0 + 1; statement.0 = ix; statement.ix = "RETURN"
+	ix = statement.0 + 1; statement.0 = ix; statement.ix = "SAVE FN"
+	ix = statement.0 + 1; statement.0 = ix; statement.ix = "STOP"
+	
+	/* ------------------------------------- array for program functions --- */
+	/* --- .1 is the input type -------------------------------------------- */
+	/* --- .2 is the output type ------------------------------------------- */
+	function. = ""
+	function.0 = 0
+	ix = function.0 + 1; function.0 = ix; function.ix = "ABS";		function.ix.1 = "N";		function.ix.2 = "N"
+	ix = function.0 + 1; function.0 = ix; function.ix = "ASC";		function.ix.1 = "S";		function.ix.2 = "N"
+	ix = function.0 + 1; function.0 = ix; function.ix = "CHR$";		function.ix.1 = "N";		function.ix.2 = "S"
+	ix = function.0 + 1; function.0 = ix; function.ix = "COS";		function.ix.1 = "N";		function.ix.2 = "N"
+	ix = function.0 + 1; function.0 = ix; function.ix = "INT";		function.ix.1 = "N";		function.ix.2 = "N"
+	ix = function.0 + 1; function.0 = ix; function.ix = "LEFT$";	function.ix.1 = "S N";		function.ix.2 = "S"
+	ix = function.0 + 1; function.0 = ix; function.ix = "LEN";		function.ix.1 = "S";		function.ix.2 = "N"
+	ix = function.0 + 1; function.0 = ix; function.ix = "MID$";		function.ix.1 = "S N [N]";	function.ix.2 = "S"
+	ix = function.0 + 1; function.0 = ix; function.ix = "RIGHT$";	function.ix.1 = "S N";		function.ix.2 = "S"
+	ix = function.0 + 1; function.0 = ix; function.ix = "RND";		function.ix.1 = "[N]";		function.ix.2 = "N"
+	ix = function.0 + 1; function.0 = ix; function.ix = "SIN";		function.ix.1 = "N";		function.ix.2 = "N"
+	ix = function.0 + 1; function.0 = ix; function.ix = "SQR";		function.ix.1 = "N";		function.ix.2 = "N"
+	ix = function.0 + 1; function.0 = ix; function.ix = "STR$";		function.ix.1 = "N";		function.ix.2 = "S"
+	ix = function.0 + 1; function.0 = ix; function.ix = "TAN";		function.ix.1 = "N";		function.ix.2 = "N"
+	ix = function.0 + 1; function.0 = ix; function.ix = "VAL";		function.ix.1 = "S";		function.ix.2 = "N"
+
 Return rc
 
 
