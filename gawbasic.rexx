@@ -4,14 +4,14 @@
 /* Program name:    gawbasic.rexx                                             */
 /* Author:          Gerard Wassink                                            */
 /* Date:            September 2019                                            */
-	versionString = "1.2"
+	versionString = "0.1"
 /* Purpose:         Practise writing interpreters. learning to understand the */
 /*                  inner workings of a computer language                     */
 /*                                                                            */
 /* History:                                                                   */
-/*   v0.0     First setup skeleton for entering and listing the program       */
-/*            Built in the RENUM command                                      */
-/*   v0.1     Built in the DEL, NEW, SAVE, LOAD commands                      */
+/*   v0.1     First setup skeleton for entering and listing the program       */
+/*            Built in the RENUM, LIST command                                */
+/*            Built in the DEL, NEW, SAVE, LOAD commands                      */
 /*                                                                            */
 /* -------------------------------------------------------------------------- */
 
