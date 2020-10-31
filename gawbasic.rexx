@@ -125,26 +125,29 @@ execStatement:
 	Parse Var execLine lnum verb rest
 	verb = Upper(verb)
 	Select
-		When verb = "CLR" Then Do
+		When verb == "CLR" Then Do
 			Say "CLR statement"
 		End
-		When verb = "END" Then Do
+		When verb == "END" Then Do
 			Say "END statement"
 		End
-		When verb = "REM" Then Do
+		When verb == "STOP" Then Do
+			Say "STOP statement"
+		End
+		When verb == "REM" Then Do
 			                               /* --- Do nothing for comments --- */
 			Say "REM statement"
 		End
-		When verb = "PRINT" Then Do
+		When verb == "PRINT" Then Do
 			Say "PRINT statement"
 		End
-		When verb = "GOTO" Then Do
+		When verb == "GOTO" Then Do
 			Say "GOTO statement"
 			nNum = Word(rest,1)
-			curline = findLnum(nNum)
+			curline = findLnum(nNum) - 1	/* will be incremented in execProgram loop */
 		End
 		Otherwise Do
-			Say "Execution halted, syntax error in line" lnum "- Incorrect statement" verb
+			Say "Execution halted, syntax error in line" lnum "- Incorrect statement:" verb
 			curLine = program.0 + 1
 		End
 	End
